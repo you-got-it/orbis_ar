@@ -1,10 +1,12 @@
 
-
+var fs = require('fs');
 module.exports = {
   devServer: {
-    https: true,
-    host: '0.0.0.0'
+    https: {
+      key: fs.readFileSync('./certs/example.com+5-key.pem'),
+      cert: fs.readFileSync('./certs/example.com+5.pem'),
+    },
+    public: 'https://192.168.100.5:8082/'
   },
-  publicPath: './',
- 
+  publicPath: './', 
 };

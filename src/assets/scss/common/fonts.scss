@@ -1,0 +1,32 @@
+$font-baskerville-regular: (
+	font-family: ("baskerville-display-pt", serif),
+	font-weight: 400
+);
+
+$font-baskerville-bold: (
+	font-family: ("baskerville-display-pt", serif),
+	font-weight: 700
+);
+
+$font-orpheuspro: (
+	font-family: ("orpheuspro", serif),
+	font-weight: 400
+);
+
+$font-default: map-merge(
+	$font-baskerville-regular, (
+		line-height: (24/16)
+	)
+);
+
+$font-button: map-merge(
+	$font-baskerville-bold, (
+		font-size: rem(12),
+		letter-spacing: letter-spacing(4, 12), // ((1px / font size) * letter spacing px value)
+		line-height: (.8),
+		text-transform: uppercase
+	)
+);
+
+
+

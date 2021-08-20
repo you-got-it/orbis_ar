@@ -81,7 +81,7 @@ window.THREE = require("three");
 //require("@/assets/js/ar-nft.js");
 @Component
 export default class AR extends Vue {
-  isDesktop = true;
+  isDesktop = false;
   isStarted = false;
   explore = {};
   currentScene;
@@ -121,28 +121,32 @@ export default class AR extends Vue {
       this.threeCamera.updateProjectionMatrix();
       this.renderer.setSize(this.width, this.height);
     }
+    console.log("resize1");
+    console.log(this.renderer.domElement.style.height);
   }
   resizeAR() {
     this.arToolkitSource.onResizeElement();
+    console.log(this.renderer.domElement.style.height);
     this.arToolkitSource.copyElementSizeTo(this.renderer.domElement);
-    const mat = this.arToolkitContext.getProjectionMatrix();
-    mat.elements[14] *= 20;
-    this.threeCamera.projectionMatrix.copy(mat);
+    // const mat = this.arToolkitContext.getProjectionMatrix();
+    // mat.elements[14] *= 200;
+    // this.threeCamera.projectionMatrix.copy(mat);
     if (this.arToolkitContext.arController !== null) {
-      this.arToolkitSource.copyElementSizeTo(
-        this.arToolkitContext.arController.canvas
-      );
+      // this.arToolkitSource.copyElementSizeTo(
+      //   this.arToolkitContext.arController.canvas
+      // );
     }
+    console.log("resize2");
   }
 
   async startAR() {
     document.body.style.backgroundColor = "transparent";
     //window.THREEx.parent = this.$el;
     this.initScene();
-    await this.loadResources();
-    this.setupObjects();
     this.onWindowResize();
     window.addEventListener("resize", this.onWindowResize.bind(this), false);
+    await this.loadResources();
+    this.setupObjects();
   }
 
   async loadResources() {
@@ -216,7 +220,7 @@ export default class AR extends Vue {
     this.renderer.setClearColor(0xffeea0, 0);
     this.renderer.outputEncoding = sRGBEncoding;
     this.renderer.autoClear = false;
-    this.renderer.clippingPlanes = [new Plane(new Vector3(0, 1, 0), 0)];
+    //this.renderer.clippingPlanes = [new Plane(new Vector3(0, 1, 0), 0)];
 
     if (this.isDesktop) {
       this.controls = new OrbitControls(this.threeCamera, this.$refs["3d"]);
@@ -238,8 +242,8 @@ export default class AR extends Vue {
 
   setupObjects() {
     this.scene.environment = this.hdrEnv;
-    //this.models.model.scale.set(6, 6, 6);
-    //this.sceneGroup.add(this.models.model);
+    // this.models.model.scale.set(6, 6, 6);
+    // this.sceneGroup.add(this.models.model);
     if (this.isDesktop) {
       this.currentScene = this.scene;
       this.sceneGroup.scale.set(2, 2, 2);
@@ -248,7 +252,9 @@ export default class AR extends Vue {
     } else {
       this.initAR();
       this.currentScene = this.sceneGroup;
-      this.sceneGroup.scale.set(0.026 * 2, 0.026 * 2, 0.026 * 2);
+      //this.sceneGroup.scale.set(0.026 * 2, 0.026 * 2, 0.026 * 2);
+      this.sceneGroup.scale.set(70, 70, 70);
+      this.sceneGroup.position.set(200, 0, -160);
       this.smoothedRoot.add(this.sceneGroup);
     }
 
@@ -275,7 +281,7 @@ export default class AR extends Vue {
     //this.plane = this.models.model.clone();
     this.plane = SkeletonUtils.clone(this.models.model);
     this.plane.material = material;
-    this.plane.position.y = -0.24;
+    this.plane.position.y = -0.64;
     this.plane.position.z = zOffset;
     //this.plane.material = material;
     this.plane.children[0].children[1].material = material;
@@ -333,7 +339,7 @@ export default class AR extends Vue {
 
   initAR() {
     ArToolkitContext.baseURL = "./";
-    const config = { video: { width: 320 /* 320-640-1280 */ } };
+    //const config = { video: { width: 320 /* 320-640-1280 */ } };
     /* const v = document.createElement('video');
   const start = () => navigator.mediaDevices.getUserMedia(config)
     .then(stream => v.srcObject = stream)
@@ -345,12 +351,14 @@ export default class AR extends Vue {
     this.arToolkitSource = new ArToolkitSource({
       // to read from the webcam
       sourceType: "webcam",
-      displayWidth: 80 * 6,
-      displayHeight: 80 * 8,
+      sourceWidth: window.innerWidth > window.innerHeight ? 640 : 480,
+      sourceHeight: window.innerWidth > window.innerHeight ? 480 : 640,
     });
 
     this.arToolkitSource.init(() => {
-      this.resizeAR();
+      setTimeout(() => {
+        this.resizeAR();
+      }, 1000);
       window.addEventListener("resize", this.resizeAR.bind(this), false);
     });
     this.arToolkitContext = new ArToolkitContext(
@@ -358,31 +366,18 @@ export default class AR extends Vue {
         cameraParametersUrl: "./data/camera_para.dat",
         detectionMode: "mono",
         //patternRatio: 0.75,
-        maxDetectionRate: 20,
-        canvasWidth: 80 * 6 * 0.5,
-        canvasHeight: 80 * 8 * 0.5,
+        maxDetectionRate: 0.1,
+        canvasWidth: 80 * 6,
+        canvasHeight: 80 * 8,
         imageSmoothingEnabled: false,
-        sourceWidth: window.innerWidth > window.innerHeight ? 640 : 480,
-        sourceHeight: window.innerWidth > window.innerHeight ? 480 : 640,
+        // sourceWidth: window.innerWidth > window.innerHeight ? 640 : 480,
+        // sourceHeight: window.innerWidth > window.innerHeight ? 480 : 640,
       },
       {
         sourceWidth: 480,
         sourceHeight: 640,
       }
     );
-    // initialize it
-    this.arToolkitContext.init(() => {
-      // copy projection matrix to camera
-      const mat = this.arToolkitContext.getProjectionMatrix();
-      mat.elements[14] *= 200;
-      this.threeCamera.projectionMatrix.copy(mat);
-      this.arToolkitContext.arController.addEventListener("markerFound", () => {
-        console.log("found");
-        if (!this.isStarted) {
-          this.isStarted = true;
-        }
-      });
-    });
 
     this.onRenderFcts = [];
     this.onRenderFcts.push(() => {
@@ -411,6 +406,44 @@ export default class AR extends Vue {
         // smoothThreshold: 2,
       }
     );
+    // this.markerControls2 = new ArMarkerControls(
+    //   this.arToolkitContext,
+    //   this.markerRoot,
+    //   {
+    //     type: "nft",
+    //     descriptorsUrl: "data/1/marker",
+
+    //     // patternUrl: './data/patt.hiro',
+    //     // as we controls the camera, set changeMatrixMode: 'cameraTransformMatrix'
+    //     // changeMatrixMode: 'cameraTransformMatrix',
+    //     // turn on/off camera smoothing
+    //     // smooth: true,
+    //     // number of matrices to smooth tracking over, more = smoother but slower follow
+    //     // smoothCount: 5,
+    //     // distance tolerance for smoothing, if smoothThreshold # of matrices are under tolerance, tracking will stay still
+    //     // smoothTolerance: 0.01,
+    //     // threshold for smoothing, will keep still unless enough matrices are over tolerance
+    //     // smoothThreshold: 2,
+    //   }
+    // );
+    this.markerControls.addEventListener("markerFound", (evt) => {
+      // console.log("onMarkerFound!!1");
+    });
+
+    // initialize it
+    this.arToolkitContext.init(() => {
+      // copy projection matrix to camera
+      // const mat = this.arToolkitContext.getProjectionMatrix();
+      // mat.elements[14] *= 200;
+      // this.threeCamera.projectionMatrix.copy(mat);
+      const canvas = this.arToolkitContext.arController.canvas;
+      this.$el.appendChild(canvas);
+      canvas.style.position = "fixed";
+      canvas.style.zIndex = 555;
+    });
+    // this.markerControls2.addEventListener("markerFound", (evt) => {
+    //   console.log("onMarkerFound!!1");
+    // });
 
     // build a smoothedControls
     this.smoothedRoot = new Group();
@@ -442,6 +475,16 @@ export default class AR extends Vue {
       // const { width } = this;
       this.renderer.setScissorTest(true);
       this.renderer.setScissor(left, 0, this.width + 5, this.height);
+      // this.threeCamera.position.x = 0;
+      // this.threeCamera.position.y = 0;
+      // this.threeCamera.position.z = 5;
+      // this.markerRoot.position.set(0, 0, 0);
+      // this.threeCamera.lookAt(this.markerRoot);
+      //this.markerRoot.position.set(0, 0, 0);
+      // this.markerRoot.scale.set(1, 1, 1);
+      //console.log(this.markerRoot.scale.x);
+      //this.smoothedRoot.position.y = -20;
+      //this.markerRoot.visible = true;
       this.renderer.render(this.scene, this.threeCamera);
     });
 

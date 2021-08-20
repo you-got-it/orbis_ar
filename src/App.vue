@@ -20,13 +20,23 @@ export default class App extends Vue {
 }
 </script>
 
-<style>
+<style lang="scss" scoped>
+@import "~@/assets/scss/common/mixins";
+@import "~@/assets/scss/common/variables";
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.content {
+  width: 100%;
+  max-width: 375px;
+  margin: 0 auto;
+
+  @include desktop-up-layout {
+    max-width: 746px;
+  }
 }
 </style>
