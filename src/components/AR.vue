@@ -1,6 +1,7 @@
 <template>
   <div ref="container" id="ar" class="ar">
     <canvas class="ar__canvas" ref="3d" width="10px" height="10px"></canvas>
+    <div class="debug" v-html="getDebugString"></div>
   </div>
 </template>
 
@@ -61,13 +62,13 @@ import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
 import { SkeletonUtils } from "three/examples/jsm/utils/SkeletonUtils";
 
 //import { ArToolkitProfile } from "@ar-js-org/ar.js";
-import {
-  ArToolkitProfile,
-  ArToolkitSource,
-  ArToolkitContext,
-  ArMarkerControls,
-  ArSmoothedControls,
-} from "../assets/js/ar-threex-nft.js";
+// import {
+//   ArToolkitProfile,
+//   ArToolkitSource,
+//   ArToolkitContext,
+//   ArMarkerControls,
+//   ArSmoothedControls,
+// } from "../assets/js/ar-threex-nft.js";
 // } from "@ar-js-org/ar.js/three.js/build/ar-threex-nft.js";
 
 //import gsap from "gsap";
@@ -90,22 +91,31 @@ export default class AR extends Vue {
   explorePetals = [];
   mixer;
   mixers = [];
+  debugString = 'String';
+
+  get getDebugString(){
+    return this.debugString;
+  }
+
+  setDebugString(text){
+    this.debugString = text;
+  }
 
   mounted() {
     //console.log(ArToolkitProfile);
     window.app = this;
-    // if (!window.THREEx) {
-    //   // eslint-disable-next-line no-useless-escape
-    //   postscribe("#ar", '<script src="./ar-nft.js"><\/script>', {
-    //     done: () => {
-    //       window.app = this;
-    //       this.startAR();
-    //     },
-    //   });
-    // } else {
-    //   this.startAR();
-    // }
-    this.startAR();
+    if (!window.THREEx) {
+      // eslint-disable-next-line no-useless-escape
+      postscribe("#ar", '<script src="./ar-nft.js"><\/script>', {
+        done: () => {
+          window.app = this;
+          this.startAR();
+        },
+      });
+    } else {
+      this.startAR();
+    }
+    // this.startAR();
   }
 
   onWindowResize() {
@@ -141,7 +151,7 @@ export default class AR extends Vue {
 
   async startAR() {
     document.body.style.backgroundColor = "transparent";
-    //window.THREEx.parent = this.$el;
+    window.THREEx.parent = this.$el;
     this.initScene();
     this.onWindowResize();
     window.addEventListener("resize", this.onWindowResize.bind(this), false);
@@ -338,7 +348,7 @@ export default class AR extends Vue {
   }
 
   initAR() {
-    ArToolkitContext.baseURL = "./";
+    window.THREEx.ArToolkitContext.baseURL = "./";
     //const config = { video: { width: 320 /* 320-640-1280 */ } };
     /* const v = document.createElement('video');
   const start = () => navigator.mediaDevices.getUserMedia(config)
@@ -348,11 +358,16 @@ export default class AR extends Vue {
     .catch(log);
   start();
   var log = msg => this.$refs.log.innerHTML += `<p>${msg}</p>`; */
-    this.arToolkitSource = new ArToolkitSource({
+    this.arToolkitSource = new window.THREEx.ArToolkitSource({
       // to read from the webcam
       sourceType: "webcam",
-      sourceWidth: window.innerWidth > window.innerHeight ? 640 : 480,
-      sourceHeight: window.innerWidth > window.innerHeight ? 480 : 640,
+     
+      // sourceWidth: (window.innerWidth > window.innerHeight ? 640 : 480)*1,
+      // sourceHeight: (window.innerWidth > window.innerHeight ? 480 : 640)*1,      
+      sourceWidth: (window.innerWidth > window.innerHeight ? 640 : 480)*1,
+      sourceHeight: (window.innerWidth > window.innerHeight ? 480 : 640)*1,      
+      displayWidth: (window.innerWidth > window.innerHeight ? 640 : 480),
+      displayHeight: (window.innerWidth > window.innerHeight ? 480 : 640),
     });
 
     this.arToolkitSource.init(() => {
@@ -361,22 +376,25 @@ export default class AR extends Vue {
       }, 1000);
       window.addEventListener("resize", this.resizeAR.bind(this), false);
     });
-    this.arToolkitContext = new ArToolkitContext(
+    this.arToolkitContext = new window.THREEx.ArToolkitContext(
       {
         cameraParametersUrl: "./data/camera_para.dat",
         detectionMode: "mono",
         //patternRatio: 0.75,
-        maxDetectionRate: 0.1,
-        canvasWidth: 80 * 6,
-        canvasHeight: 80 * 8,
-        imageSmoothingEnabled: false,
+        maxDetectionRate: 6,       
+        // canvasWidth: (window.innerWidth > window.innerHeight ? 640 : 480)*0.25,
+        //  canvasHeight: (window.innerWidth > window.innerHeight ? 480 : 640)*0.25,
+        canvasWidth: 640*0.25,
+        canvasHeight: 480*0.25,
+        //imageSmoothingEnabled: false,
         // sourceWidth: window.innerWidth > window.innerHeight ? 640 : 480,
         // sourceHeight: window.innerWidth > window.innerHeight ? 480 : 640,
-      },
-      {
-        sourceWidth: 480,
-        sourceHeight: 640,
       }
+      // ,
+      // {
+      //   sourceWidth: (window.innerWidth > window.innerHeight ? 640 : 480)*0.1,
+      //   sourceHeight: (window.innerWidth > window.innerHeight ? 480 : 640)*0.1, 
+      // }
     );
 
     this.onRenderFcts = [];
@@ -386,7 +404,7 @@ export default class AR extends Vue {
       // update scene.visible if the marker is seen
     });
 
-    this.markerControls = new ArMarkerControls(
+    this.markerControls = new window.THREEx.ArMarkerControls(
       this.arToolkitContext,
       this.markerRoot,
       {
@@ -439,7 +457,8 @@ export default class AR extends Vue {
       const canvas = this.arToolkitContext.arController.canvas;
       this.$el.appendChild(canvas);
       canvas.style.position = "fixed";
-      canvas.style.zIndex = 555;
+      canvas.style.zIndex = 55;
+      canvas.style.left = 0;
     });
     // this.markerControls2.addEventListener("markerFound", (evt) => {
     //   console.log("onMarkerFound!!1");
@@ -449,20 +468,23 @@ export default class AR extends Vue {
     this.smoothedRoot = new Group();
     this.scene.add(this.smoothedRoot);
 
-    this.smoothedControls = new ArSmoothedControls(this.smoothedRoot, {
-      // lerp coeficient for the position - between [0,1] - default to 1
-      lerpPosition: 0.16,
-      // lerp coeficient for the quaternion - between [0,1] - default to 1
-      lerpQuaternion: 0.16,
-      // lerp coeficient for the scale - between [0,1] - default to 1
-      lerpScale: 0.16,
-      // delay for lerp fixed steps - in seconds - default to 1/120
-      lerpStepDelay: 1 / 50,
-      // minimum delay the sub-control must be visible before this controls become visible - default to 0 seconds
-      minVisibleDelay: 0.0,
-      // minimum delay the sub-control must be unvisible before this controls become unvisible - default to 0 seconds
-      minUnvisibleDelay: 10,
-    });
+    this.smoothedControls = new window.THREEx.ArSmoothedControls(
+      this.smoothedRoot,
+      {
+        // lerp coeficient for the position - between [0,1] - default to 1
+        lerpPosition: 0.16,
+        // lerp coeficient for the quaternion - between [0,1] - default to 1
+        lerpQuaternion: 0.16,
+        // lerp coeficient for the scale - between [0,1] - default to 1
+        lerpScale: 0.16,
+        // delay for lerp fixed steps - in seconds - default to 1/120
+        lerpStepDelay: 1 / 50,
+        // minimum delay the sub-control must be visible before this controls become visible - default to 0 seconds
+        minVisibleDelay: 0.0,
+        // minimum delay the sub-control must be unvisible before this controls become unvisible - default to 0 seconds
+        minUnvisibleDelay: 10,
+      }
+    );
 
     this.onRenderFcts.push(() => {
       this.smoothedControls.update(this.markerRoot);
@@ -574,5 +596,17 @@ export default class AR extends Vue {
     left: 0;
     top: 0;
   }
+}
+.debug{
+  font-size: 16px;
+  font-weight: 400;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  text-align: left;
+  background: rgba(0,0,0,0.3);
+  color: #fff;
+  padding: 10px;
+  z-index: 100;
 }
 </style>
