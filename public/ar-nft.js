@@ -332,7 +332,7 @@ THREEx.ArMarkerCloak.fragmentShader = '\n'+
 '	}'
 var ARjs = ARjs || {}
 var THREEx = THREEx || {}
-
+////markerinit
 ARjs.MarkerControls = THREEx.ArMarkerControls = function (context, object3d, parameters) {
     var _this = this
 
@@ -375,6 +375,7 @@ ARjs.MarkerControls = THREEx.ArMarkerControls = function (context, object3d, par
     this.object3d = object3d
     this.object3d.matrixAutoUpdate = false;
     this.object3d.visible = false
+	
 
     //////////////////////////////////////////////////////////////////////////////
     //		setParameters
@@ -496,7 +497,10 @@ ARjs.MarkerControls.prototype.updateWithModelViewMatrix = function (modelViewMat
             markerObject3D.matrix.copy(modelViewMatrix)
         }
     } else if (this.parameters.changeMatrixMode === 'cameraTransformMatrix') {
+	
         markerObject3D.matrix.getInverse(modelViewMatrix)
+		//modelViewMatrix.copy( markerObject3D.matrix ).invert()
+		
     } else {
         console.assert(false)
     }
@@ -507,7 +511,6 @@ ARjs.MarkerControls.prototype.updateWithModelViewMatrix = function (modelViewMat
 
     // dispatchEvent
     this.dispatchEvent({ type: 'markerFound' });
-
     return renderReqd;
 }
 
@@ -539,9 +542,9 @@ ARjs.MarkerControls.prototype.name = function () {
 //////////////////////////////////////////////////////////////////////////////
 //		init for Artoolkit
 //////////////////////////////////////////////////////////////////////////////
+var workers = [];
 ARjs.MarkerControls.prototype._initArtoolkit = function () {
-    var _this = this
-
+    var _this = this	
     var artoolkitMarkerId = null
 
     var delayedInitTimerId = setInterval(() => {
@@ -558,8 +561,9 @@ ARjs.MarkerControls.prototype._initArtoolkit = function () {
     return
 
     function postInit() {
-        // check if arController is init
-        var arController = _this.context.arController;			
+        // check if arController is init		
+        var arController = _this.context.arController;
+		
         console.assert(arController !== null)			
         // start tracking this pattern
         if (_this.parameters.type === 'pattern') {
@@ -571,10 +575,8 @@ ARjs.MarkerControls.prototype._initArtoolkit = function () {
             artoolkitMarkerId = _this.parameters.barcodeValue
             arController.trackBarcodeMarkerId(artoolkitMarkerId, _this.parameters.size);
         } else if (_this.parameters.type === 'nft') {
-            // use workers as default		
-						console.log(_this.parameters);	
-						console.log(_this.context.parameters);					
-            handleNFT(_this.parameters.descriptorsUrl, arController, _this.context.parameters);
+            // use workers as default											
+            handleNFT(_this.parameters.descriptorsUrl, arController, _this.context.parameters, _this);
         } else if (_this.parameters.type === 'unknown') {
             artoolkitMarkerId = null
         } else {
@@ -592,7 +594,10 @@ ARjs.MarkerControls.prototype._initArtoolkit = function () {
             } else if (event.data.type === artoolkit.UNKNOWN_MARKER && _this.parameters.type === 'unknown') {
                 onMarkerFound(event);
             }
-        })
+        })	
+		// arController.addEventListener('lostNFTMarker', function (event) {
+           // console.log('lost!!!!!!!');
+        // })	
     }
 
     function setMatrix(matrix, value) {
@@ -606,13 +611,15 @@ ARjs.MarkerControls.prototype._initArtoolkit = function () {
             matrix.elements = [].slice.call(array);
         }
     };
-
-    function handleNFT(descriptorsUrl, arController, parameters) {
+	
+	
+    function handleNFT(descriptorsUrl, arController, parameters, markerControls) {
         // create a Worker to handle loading of NFT marker and tracking of it
         var workerBlob = new Blob(
             [workerRunner.toString().replace(/^function .+\{?|\}$/g, '')],
             { type: 'text/js-worker' }
         );
+		workers.push(workerBlob);
         var workerBlobUrl = URL.createObjectURL(workerBlob);
         var worker = new Worker(workerBlobUrl);
 				window.nftWorker = worker;
@@ -623,21 +630,22 @@ ARjs.MarkerControls.prototype._initArtoolkit = function () {
 					var vh = video.clientHeight;
 
 					var pscale = 320 / Math.max(vw, vh / 3 * 4);
-					if(vw < vh)
-					{
-						pscale *= 4/3;
-					}
+					// if(vw < vh)
+					// {
+						// pscale *= 4/3;
+					// }
 				
 					w = vw * pscale;
 					h = vh * pscale;
 					pw = Math.max(w, h / 3 * 4);
-					ph = Math.max(h, w / 4 * 3);
-					pw*=0.75;
-					ph*=0.75;
+					ph = Math.max(h, w / 4 * 3);					
+				
+					
 					ox = (pw - w) / 2;
 					oy = (ph - h) / 2;
 					
-
+					
+					
 					
 					// vw = video.videoWidth;
 					// vh = video.videoHeight;
@@ -665,6 +673,7 @@ ARjs.MarkerControls.prototype._initArtoolkit = function () {
 						
             var context_process = arController.canvas.getContext('2d');
 						let tt = 0;
+						markerControls.update = workerBlob.nftProcess =
             window.nftProcess = process = function () {
 								// vw = video.videoWidth;
 								// vh = video.videoHeight;
@@ -694,7 +703,7 @@ ARjs.MarkerControls.prototype._initArtoolkit = function () {
                 ph: ph,
                 marker: descriptorsUrl,
                 param: arController.cameraParam.src,
-            });
+            });			
 
             worker.onmessage = function (ev) {
                 if (ev && ev.data && ev.data.type === 'endLoading') {
@@ -723,8 +732,7 @@ ARjs.MarkerControls.prototype._initArtoolkit = function () {
                 }
 
                 if (ev && ev.data && ev.data.type === 'found') {
-                    var matrix = JSON.parse(ev.data.matrix);
-
+                    var matrix = JSON.parse(ev.data.matrix);					
                     onMarkerFound({
                         data: {
                             type: artoolkit.NFT_MARKER,
@@ -736,14 +744,15 @@ ARjs.MarkerControls.prototype._initArtoolkit = function () {
                     _this.context.arController.showObject = true;
                 } else {
                     _this.context.arController.showObject = false;
-                }
+					markerControls.dispatchEvent({ type: 'markerLost' });
+                }		
 
                 //process();
             };
 
         });
 
-
+		
 
     };
 
@@ -1022,12 +1031,14 @@ THREEx.ArSmoothedControls.prototype.update = function(targetObject3d){
 		applyOneSlerpStep()
 		this._lastLerpStepAt = present
 	}else{
-		var nStepsToDo = Math.floor( (present - this._lastLerpStepAt)/this.parameters.lerpStepDelay )
+		var nStepsToDo = Math.floor( (present - this._lastLerpStepAt)/this.parameters.lerpStepDelay );
+		
 		for(var i = 0; i < nStepsToDo; i++){
 			applyOneSlerpStep()
 			this._lastLerpStepAt += this.parameters.lerpStepDelay
 		}
 	}
+	
 
 	// disable the lerp by directly copying targetObject3d position/quaternion/scale
 	if( false ){		
@@ -1056,7 +1067,7 @@ THREEx.ArSmoothedControls.prototype.update = function(targetObject3d){
 		object3d.scale.copy( targetObject3d.scale )
 	}	
 	
-	function applyOneSlerpStep(){
+	function applyOneSlerpStep(){		
 		object3d.position.lerp(targetObject3d.position, parameters.lerpPosition)
 		object3d.quaternion.slerp(targetObject3d.quaternion, parameters.lerpQuaternion)
 		object3d.scale.lerp(targetObject3d.scale, parameters.lerpScale)
@@ -1185,7 +1196,7 @@ ARjs.Context.prototype.init = function (onCompleted) {
 ////////////////////////////////////////////////////////////////////////////////
 //          update function
 ////////////////////////////////////////////////////////////////////////////////
-ARjs.Context.prototype.update = function (srcElement) {
+ARjs.Context.prototype.update = function (marker) {
 	
 
     // be sure arController is fully initialized
@@ -1208,7 +1219,11 @@ ARjs.Context.prototype.update = function (srcElement) {
     // process this frame
     if (this.parameters.trackingBackend === 'artoolkit') {			
         //this._updateArtoolkit(srcElement)
-				window.nftProcess();
+				
+				if(workers[marker])
+				{
+					workers[marker].nftProcess();
+				}
 				//console.log('wtf');
     } else {
         console.assert(false)
@@ -1621,6 +1636,7 @@ ARjs.Source.prototype._initSourceImage = function (onReady) {
 
     domElement.width = this.parameters.sourceWidth;
     domElement.height = this.parameters.sourceHeight;
+	
     domElement.style.width = this.parameters.displayWidth + 'px';
     domElement.style.height = this.parameters.displayHeight + 'px';
 
@@ -1656,7 +1672,7 @@ ARjs.Source.prototype._initSourceVideo = function (onReady) {
     domElement.height = this.parameters.sourceHeight;
     domElement.style.width = this.parameters.displayWidth + 'px';
     domElement.style.height = this.parameters.displayHeight + 'px';
-
+	
     domElement.onloadeddata = onReady;
     return domElement
 }
@@ -1689,6 +1705,7 @@ ARjs.Source.prototype._initSourceWebcam = function (onReady, onError) {
     domElement.setAttribute('playsinline', '');
     domElement.style.width = this.parameters.displayWidth + 'px'
     domElement.style.height = this.parameters.displayHeight + 'px'
+	console.log(domElement)
 
     // check API is available
     if (navigator.mediaDevices === undefined

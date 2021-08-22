@@ -81,7 +81,7 @@ import postscribe from "postscribe";
 window.THREE = require("three");
 //require("@/assets/js/ar-nft.js");
 @Component
-export default class AR extends Vue {
+export default class ARnft extends Vue {
   isDesktop = false;
   isStarted = false;
   explore = {};
@@ -91,15 +91,13 @@ export default class AR extends Vue {
   explorePetals = [];
   mixer;
   mixers = [];
-  debugString = "String";
-  currentMarker = 0;
-  found = false;
+  debugString = 'String';
 
-  get getDebugString() {
+  get getDebugString(){
     return this.debugString;
   }
 
-  setDebugString(text) {
+  setDebugString(text){
     this.debugString = text;
   }
 
@@ -168,8 +166,8 @@ export default class AR extends Vue {
       layer_2: "images/1/2.png",
     };
     const modelsToLoad = {
-      // model: "models/anim_7.glb",
-      model: "models/GroundVehicle.glb",
+      model: "models/anim_7.glb",
+      //model: "models/GroundVehicle.glb",
     };
     this.images = {};
     this.models = {};
@@ -231,7 +229,7 @@ export default class AR extends Vue {
     });
     this.renderer.setClearColor(0xffeea0, 0);
     this.renderer.outputEncoding = sRGBEncoding;
-    this.renderer.autoClear = true;
+    this.renderer.autoClear = false;
     //this.renderer.clippingPlanes = [new Plane(new Vector3(0, 1, 0), 0)];
 
     if (this.isDesktop) {
@@ -363,13 +361,13 @@ export default class AR extends Vue {
     this.arToolkitSource = new window.THREEx.ArToolkitSource({
       // to read from the webcam
       sourceType: "webcam",
-
-      sourceWidth: (window.innerWidth > window.innerHeight ? 640 : 480) * 1,
-      sourceHeight: (window.innerWidth > window.innerHeight ? 480 : 640) * 1,
-      // sourceWidth: 480 * 1.2,
-      // sourceHeight: 640 * 1.2,
-      displayWidth: (window.innerWidth > window.innerHeight ? 640 : 480) * 1,
-      displayHeight: (window.innerWidth > window.innerHeight ? 480 : 640) * 1,
+     
+      // sourceWidth: (window.innerWidth > window.innerHeight ? 640 : 480)*1,
+      // sourceHeight: (window.innerWidth > window.innerHeight ? 480 : 640)*1,      
+      sourceWidth: (window.innerWidth > window.innerHeight ? 640 : 480)*1,
+      sourceHeight: (window.innerWidth > window.innerHeight ? 480 : 640)*1,      
+      displayWidth: (window.innerWidth > window.innerHeight ? 640 : 480),
+      displayHeight: (window.innerWidth > window.innerHeight ? 480 : 640),
     });
 
     this.arToolkitSource.init(() => {
@@ -383,31 +381,26 @@ export default class AR extends Vue {
         cameraParametersUrl: "./data/camera_para.dat",
         detectionMode: "mono",
         //patternRatio: 0.75,
-        maxDetectionRate: 20,
+        maxDetectionRate: 6,       
         // canvasWidth: (window.innerWidth > window.innerHeight ? 640 : 480)*0.25,
         //  canvasHeight: (window.innerWidth > window.innerHeight ? 480 : 640)*0.25,
-        canvasWidth: 640 * 0.25,
-        canvasHeight: 480 * 0.25,
+        canvasWidth: 640*0.25,
+        canvasHeight: 480*0.25,
         //imageSmoothingEnabled: false,
         // sourceWidth: window.innerWidth > window.innerHeight ? 640 : 480,
         // sourceHeight: window.innerWidth > window.innerHeight ? 480 : 640,
       }
       // ,
       // {
-      //   sourceWidth: window.innerWidth > window.innerHeight ? 640 : 480,
-      //   sourceHeight: window.innerWidth > window.innerHeight ? 480 : 640,
+      //   sourceWidth: (window.innerWidth > window.innerHeight ? 640 : 480)*0.1,
+      //   sourceHeight: (window.innerWidth > window.innerHeight ? 480 : 640)*0.1, 
       // }
     );
 
     this.onRenderFcts = [];
     this.onRenderFcts.push(() => {
       if (!this.arToolkitSource.ready) return;
-      this.arToolkitContext.update(this.currentMarker);
-      if (this.found === false) {
-        this.currentMarker += 1;
-        this.currentMarker %= this.arToolkitContext._arMarkersControls.length;
-      }
-
+      this.arToolkitContext.update(this.arToolkitSource.domElement);
       // update scene.visible if the marker is seen
     });
 
@@ -416,34 +409,43 @@ export default class AR extends Vue {
       this.markerRoot,
       {
         type: "nft",
-        descriptorsUrl: "data/1/1",
+        descriptorsUrl: "data/1/marker",
+
+        // patternUrl: './data/patt.hiro',
+        // as we controls the camera, set changeMatrixMode: 'cameraTransformMatrix'
+        // changeMatrixMode: 'cameraTransformMatrix',
+        // turn on/off camera smoothing
+        // smooth: true,
+        // number of matrices to smooth tracking over, more = smoother but slower follow
+        // smoothCount: 5,
+        // distance tolerance for smoothing, if smoothThreshold # of matrices are under tolerance, tracking will stay still
+        // smoothTolerance: 0.01,
+        // threshold for smoothing, will keep still unless enough matrices are over tolerance
+        // smoothThreshold: 2,
       }
     );
-    this.markerControls1 = new window.THREEx.ArMarkerControls(
-      this.arToolkitContext,
-      this.markerRoot,
-      {
-        type: "nft",
-        descriptorsUrl: "data/2/2",
-      }
-    );
+    // this.markerControls2 = new ArMarkerControls(
+    //   this.arToolkitContext,
+    //   this.markerRoot,
+    //   {
+    //     type: "nft",
+    //     descriptorsUrl: "data/1/marker",
+
+    //     // patternUrl: './data/patt.hiro',
+    //     // as we controls the camera, set changeMatrixMode: 'cameraTransformMatrix'
+    //     // changeMatrixMode: 'cameraTransformMatrix',
+    //     // turn on/off camera smoothing
+    //     // smooth: true,
+    //     // number of matrices to smooth tracking over, more = smoother but slower follow
+    //     // smoothCount: 5,
+    //     // distance tolerance for smoothing, if smoothThreshold # of matrices are under tolerance, tracking will stay still
+    //     // smoothTolerance: 0.01,
+    //     // threshold for smoothing, will keep still unless enough matrices are over tolerance
+    //     // smoothThreshold: 2,
+    //   }
+    // );
     this.markerControls.addEventListener("markerFound", (evt) => {
-      this.currentMarker = 0;
-      this.found = true;
-    });
-    this.markerControls.addEventListener("markerLost", (evt) => {
-      if (this.found && this.currentMarker === 0) {
-        //this.found = false;
-      }
-    });
-    this.markerControls1.addEventListener("markerFound", (evt) => {
-      this.currentMarker = 1;
-      this.found = true;
-    });
-    this.markerControls1.addEventListener("markerLost", (evt) => {
-      if (this.found && this.currentMarker === 1) {
-        //this.found = false;
-      }
+      // console.log("onMarkerFound!!1");
     });
 
     // initialize it
@@ -470,17 +472,17 @@ export default class AR extends Vue {
       this.smoothedRoot,
       {
         // lerp coeficient for the position - between [0,1] - default to 1
-        lerpPosition: 0.03,
+        lerpPosition: 0.16,
         // lerp coeficient for the quaternion - between [0,1] - default to 1
-        lerpQuaternion: 0.03,
+        lerpQuaternion: 0.16,
         // lerp coeficient for the scale - between [0,1] - default to 1
-        lerpScale: 0.03,
+        lerpScale: 0.16,
         // delay for lerp fixed steps - in seconds - default to 1/120
-        lerpStepDelay: 1 / 90,
+        lerpStepDelay: 1 / 50,
         // minimum delay the sub-control must be visible before this controls become visible - default to 0 seconds
         minVisibleDelay: 0.0,
         // minimum delay the sub-control must be unvisible before this controls become unvisible - default to 0 seconds
-        minUnvisibleDelay: 1,
+        minUnvisibleDelay: 10,
       }
     );
 
@@ -579,7 +581,6 @@ export default class AR extends Vue {
       this.onRenderFcts.forEach((onRenderFct) => {
         onRenderFct(deltaMsec / 1000, nowMsec / 1000);
       });
-      //this.smoothedRoot.visible = this.markerRoot.visible;
     }
     this.raf = window.requestAnimationFrame(this.animate.bind(this));
   }
@@ -596,14 +597,14 @@ export default class AR extends Vue {
     top: 0;
   }
 }
-.debug {
+.debug{
   font-size: 16px;
   font-weight: 400;
   position: fixed;
   bottom: 0;
   left: 0;
   text-align: left;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0,0,0,0.3);
   color: #fff;
   padding: 10px;
   z-index: 100;
