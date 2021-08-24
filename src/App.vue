@@ -1,16 +1,16 @@
 <template>
   <div id="app">
-    <AR />
+    <router-view />
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
-import AR from "./components/AR.vue";
+//import AR from "./components/AR.vue";
 
 @Component({
   components: {
-    AR,
+    //  AR,
   },
 })
 export default class App extends Vue {

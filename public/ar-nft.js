@@ -614,7 +614,7 @@ ARjs.MarkerControls.prototype._initArtoolkit = function () {
 	
 	
     function handleNFT(descriptorsUrl, arController, parameters, markerControls) {
-        // create a Worker to handle loading of NFT marker and tracking of it
+        // create a Worker to handle loading of NFT marker and tracking of it	
         var workerBlob = new Blob(
             [workerRunner.toString().replace(/^function .+\{?|\}$/g, '')],
             { type: 'text/js-worker' }
@@ -713,6 +713,7 @@ ARjs.MarkerControls.prototype._initArtoolkit = function () {
                     }
                     var endLoadingEvent = new Event('arjs-nft-loaded');
                     window.dispatchEvent(endLoadingEvent);
+					markerControls.dispatchEvent({ type: 'loaded' });					
                 }
 
                 if (ev && ev.data && ev.data.type === 'loaded') {
@@ -743,9 +744,9 @@ ARjs.MarkerControls.prototype._initArtoolkit = function () {
 
                     _this.context.arController.showObject = true;
                 } else {
-                    _this.context.arController.showObject = false;
-					markerControls.dispatchEvent({ type: 'markerLost' });
-                }		
+                    _this.context.arController.showObject = false;					
+                }
+			
 
                 //process();
             };
@@ -1018,7 +1019,8 @@ THREEx.ArSmoothedControls.prototype.update = function(targetObject3d){
 	if( wasVisible === true && targetObject3d.visible === false ){
 		var unvisibleFor = present - this._unvisibleStartedAt
 		if( unvisibleFor >= this.parameters.minUnvisibleDelay ){
-			object3d.visible = false			
+			object3d.visible = false;
+			this.dispatchEvent({ type: 'markerLost' });			
 		}
 	}
 	
@@ -1611,7 +1613,7 @@ ARjs.Source.prototype.init = function (onReady, onError) {
 
     return this
     function onSourceReady() {
-        document.body.appendChild(_this.domElement);
+        THREEx.parent.appendChild(_this.domElement);
         window.dispatchEvent(new CustomEvent('arjs-video-loaded', {
             detail: {
                 component: document.querySelector('#arjs-video'),

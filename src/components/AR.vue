@@ -2,6 +2,7 @@
   <div ref="container" id="ar" class="ar">
     <canvas class="ar__canvas" ref="3d" width="10px" height="10px"></canvas>
     <div class="debug" v-html="getDebugString"></div>
+    <div class="loader" v-if="loading || markersLoading">Loading...</div>
   </div>
 </template>
 
@@ -93,7 +94,12 @@ export default class AR extends Vue {
   mixers = [];
   debugString = "String";
   currentMarker = 0;
+  lastMarker = -1;
   found = false;
+  loading = true;
+  markersLoading = true;
+  loadedMarkers = 0;
+  markers = [];
 
   get getDebugString() {
     return this.debugString;
@@ -120,6 +126,20 @@ export default class AR extends Vue {
     // this.startAR();
   }
 
+  beforeDestroy() {
+    this.reset();
+  }
+
+  reset() {
+    window.cancelAnimationFrame(this.raf);
+    window.removeEventListener("resize", this.animate.bind(this), false);
+    if (this.isDesktop) {
+      this.controls.dispose();
+    } else {
+      this.arToolkitSource.domElement.srcObject.getTracks()[0].stop();
+    }
+  }
+
   onWindowResize() {
     this.width = window.innerWidth;
     this.height = window.innerHeight;
@@ -133,8 +153,6 @@ export default class AR extends Vue {
       this.threeCamera.updateProjectionMatrix();
       this.renderer.setSize(this.width, this.height);
     }
-    console.log("resize1");
-    console.log(this.renderer.domElement.style.height);
   }
   resizeAR() {
     this.arToolkitSource.onResizeElement();
@@ -163,13 +181,43 @@ export default class AR extends Vue {
 
   async loadResources() {
     const imagesToLoad = {
-      layer_0: "images/1/0.jpg",
-      layer_1: "images/1/1.png",
-      layer_2: "images/1/2.png",
+      frame_0_0: "images/0/0.jpg",
+      frame_0_1: "images/0/1.jpg",
+      frame_0_1_mask: "images/0/1_mask.jpg",
+      frame_0_2: "images/0/2.jpg",
+      frame_0_2_mask: "images/0/2_mask.jpg",
+
+      frame_1_0: "images/1/0.jpg",
+      frame_1_1: "images/1/1.jpg",
+      frame_1_1_mask: "images/1/1_mask.jpg",
+      frame_1_2: "images/1/2.jpg",
+      frame_1_2_mask: "images/1/2_mask.jpg",
+      frame_1_3: "images/1/3.jpg",
+      frame_1_3_mask: "images/1/3_mask.jpg",
+
+      frame_2_0: "images/2/0.jpg",
+      frame_2_1: "images/2/1.jpg",
+      frame_2_1_mask: "images/2/1_mask.jpg",
+      frame_2_2: "images/2/2.jpg",
+      frame_2_2_mask: "images/2/2_mask.jpg",
+
+      frame_3_0: "images/3/0.jpg",
+      frame_3_1: "images/3/1.jpg",
+      frame_3_1_mask: "images/3/1_mask.jpg",
+      frame_3_2: "images/3/2.jpg",
+      frame_3_2_mask: "images/3/2_mask.jpg",
+      frame_3_3: "images/3/3.jpg",
+      frame_3_3_mask: "images/3/3_mask.jpg",
+
+      frame_4_0: "images/4/0.jpg",
+      frame_4_1: "images/4/1.jpg",
+      frame_4_1_mask: "images/4/1_mask.jpg",
+      frame_4_2: "images/4/2.jpg",
+      frame_4_2_mask: "images/4/2_mask.jpg",
     };
     const modelsToLoad = {
-      // model: "models/anim_7.glb",
-      model: "models/GroundVehicle.glb",
+      model: "models/anim_7.glb",
+      // model: "models/GroundVehicle.glb",
     };
     this.images = {};
     this.models = {};
@@ -182,29 +230,33 @@ export default class AR extends Vue {
         })
       )
     );
-    promises.push(
-      new Promise((resolve, reject) => {
-        new RGBELoader().setDataType(UnsignedByteType).load(
-          "./images/env.hdr",
-          (texture) => {
-            this.pmremGenerator._renderer.toneMappingExposure = 100;
-            const envMap =
-              this.pmremGenerator.fromEquirectangular(texture).texture;
-            this.hdrEnv = envMap;
-            resolve({ envMap });
-          },
-          undefined,
-          null
-        );
-      })
-    );
+    // promises.push(
+    //   new Promise((resolve, reject) => {
+    //     new RGBELoader().setDataType(UnsignedByteType).load(
+    //       "./images/env.hdr",
+    //       (texture) => {
+    //         this.pmremGenerator._renderer.toneMappingExposure = 100;
+    //         const envMap =
+    //           this.pmremGenerator.fromEquirectangular(texture).texture;
+    //         this.hdrEnv = envMap;
+    //         resolve({ envMap });
+    //       },
+    //       undefined,
+    //       null
+    //     );
+    //   })
+    // );
+
     Object.keys(modelsToLoad).map((key) => {
       promises.push(this.loadModel(key, modelsToLoad[key]));
     });
     //
 
     await Promise.all(promises).then(() => {
-      this.resLoaded = true;
+      this.loading = false;
+      if (this.isDesktop) {
+        this.markersLoading = false;
+      }
       console.log("promiseAll");
       //
     });
@@ -232,7 +284,9 @@ export default class AR extends Vue {
     this.renderer.setClearColor(0xffeea0, 0);
     this.renderer.outputEncoding = sRGBEncoding;
     this.renderer.autoClear = true;
-    //this.renderer.clippingPlanes = [new Plane(new Vector3(0, 1, 0), 0)];
+    this.initPlane = new Plane(new Vector3(0, 1, 0), 0);
+    this.clippingPlane = this.initPlane.clone();
+    this.renderer.clippingPlanes = [this.clippingPlane];
 
     if (this.isDesktop) {
       this.controls = new OrbitControls(this.threeCamera, this.$refs["3d"]);
@@ -253,7 +307,7 @@ export default class AR extends Vue {
   }
 
   setupObjects() {
-    this.scene.environment = this.hdrEnv;
+    // this.scene.environment = this.hdrEnv;
     // this.models.model.scale.set(6, 6, 6);
     // this.sceneGroup.add(this.models.model);
     if (this.isDesktop) {
@@ -266,21 +320,112 @@ export default class AR extends Vue {
       this.currentScene = this.sceneGroup;
       //this.sceneGroup.scale.set(0.026 * 2, 0.026 * 2, 0.026 * 2);
       this.sceneGroup.scale.set(70, 70, 70);
-      this.sceneGroup.position.set(200, 0, -160);
+      this.sceneGroup.position.set(400, 0, -160);
       this.smoothedRoot.add(this.sceneGroup);
     }
-
-    const width = 1024 * 0.01;
-    const height = 724 * 0.01;
-    this.layerGeometry = new PlaneGeometry(width, height);
-    this.layerGeometry.translate(0, height * 0.5, 0);
-
-    this.setupLayer(this.images.layer_0, -3, 0);
-    this.setupLayer(this.images.layer_1, -1, 0.8);
-    this.setupLayer(this.images.layer_2, 1, 1.6);
+    if (this.isDesktop) {
+      this.setLayers(4);
+    }
   }
 
-  setupLayer(image, zOffset, delay) {
+  setLayers(num) {
+    this.sceneGroup.children = [];
+    switch (num) {
+      case 0:
+        this.setupLayer(this.images.frame_0_0, -2, 0);
+        this.setupLayer(
+          this.images.frame_0_1,
+          0,
+          0.8,
+          this.images.frame_0_1_mask
+        );
+        this.setupLayer(
+          this.images.frame_0_2,
+          2,
+          1.6,
+          this.images.frame_0_2_mask
+        );
+        break;
+
+      case 1:
+        this.setupLayer(this.images.frame_1_0, -3, 0);
+        this.setupLayer(
+          this.images.frame_1_1,
+          -1,
+          0.8 * 0.8,
+          this.images.frame_1_1_mask
+        );
+        this.setupLayer(
+          this.images.frame_1_2,
+          1,
+          1.6 * 0.8,
+          this.images.frame_1_2_mask
+        );
+        this.setupLayer(
+          this.images.frame_1_3,
+          3,
+          2.4 * 0.8,
+          this.images.frame_1_3_mask
+        );
+        break;
+
+      case 2:
+        this.setupLayer(this.images.frame_2_0, -2, 0);
+        this.setupLayer(
+          this.images.frame_2_1,
+          0,
+          0.8,
+          this.images.frame_2_1_mask
+        );
+        this.setupLayer(
+          this.images.frame_2_2,
+          2,
+          1.6,
+          this.images.frame_2_2_mask
+        );
+        break;
+
+      case 3:
+        this.setupLayer(this.images.frame_3_0, -3, 0);
+        this.setupLayer(
+          this.images.frame_3_1,
+          -1,
+          0.8 * 0.8,
+          this.images.frame_3_1_mask
+        );
+        this.setupLayer(
+          this.images.frame_3_2,
+          1,
+          1.6 * 0.8,
+          this.images.frame_3_2_mask
+        );
+        this.setupLayer(
+          this.images.frame_3_3,
+          3,
+          2.4 * 0.8,
+          this.images.frame_3_3_mask
+        );
+        break;
+
+      case 4:
+        this.setupLayer(this.images.frame_4_0, -2, 0);
+        this.setupLayer(
+          this.images.frame_4_1,
+          0,
+          0.8,
+          this.images.frame_4_1_mask
+        );
+        this.setupLayer(
+          this.images.frame_4_2,
+          2,
+          1.6,
+          this.images.frame_4_2_mask
+        );
+        break;
+    }
+  }
+
+  setupLayer(image, zOffset, delay, mask) {
     const width = 1024 * 0.01;
     const height = 724 * 0.01;
     const material = new MeshBasicMaterial({
@@ -288,11 +433,15 @@ export default class AR extends Vue {
       map: getTexture(image),
       side: DoubleSide,
       transparent: true,
+      skinning: true,
+      alphaMap: mask ? getTexture(mask) : null,
+      depthWrite: false,
     });
     //this.plane = new Mesh(this.layerGeometry, material);
     //this.plane = this.models.model.clone();
     this.plane = SkeletonUtils.clone(this.models.model);
-    this.plane.material = material;
+    //this.plane = this.models.model;
+    //this.plane.material = material;
     this.plane.position.y = -0.64;
     this.plane.position.z = zOffset;
     //this.plane.material = material;
@@ -410,41 +559,100 @@ export default class AR extends Vue {
 
       // update scene.visible if the marker is seen
     });
-
-    this.markerControls = new window.THREEx.ArMarkerControls(
-      this.arToolkitContext,
-      this.markerRoot,
-      {
-        type: "nft",
-        descriptorsUrl: "data/1/1",
-      }
-    );
-    this.markerControls1 = new window.THREEx.ArMarkerControls(
-      this.arToolkitContext,
-      this.markerRoot,
-      {
-        type: "nft",
-        descriptorsUrl: "data/2/2",
-      }
-    );
-    this.markerControls.addEventListener("markerFound", (evt) => {
-      this.currentMarker = 0;
-      this.found = true;
+    const markerUrls = [
+      "data/0/0",
+      "data/1/1",
+      "data/2/2",
+      "data/3/3",
+      "data/4/4",
+    ];
+    this.markers = [];
+    this.markers = markerUrls.map((url, index) => {
+      const marker = new window.THREEx.ArMarkerControls(
+        this.arToolkitContext,
+        this.markerRoot,
+        {
+          type: "nft",
+          descriptorsUrl: url,
+        }
+      );
+      marker.id = index;
+      marker.addEventListener("markerFound", () => {
+        this.currentMarker = index;
+        if (this.lastMarker !== index) {
+          this.lastMarker = index;
+          this.setLayers(index);
+        }
+        this.found = true;
+      });
+      marker.addEventListener("loaded", () => {
+        this.loadedMarkers += 1;
+        if (this.loadedMarkers === markerUrls.length) {
+          this.markersLoading = false;
+        }
+      });
+      return marker;
     });
-    this.markerControls.addEventListener("markerLost", (evt) => {
-      if (this.found && this.currentMarker === 0) {
-        //this.found = false;
-      }
-    });
-    this.markerControls1.addEventListener("markerFound", (evt) => {
-      this.currentMarker = 1;
-      this.found = true;
-    });
-    this.markerControls1.addEventListener("markerLost", (evt) => {
-      if (this.found && this.currentMarker === 1) {
-        //this.found = false;
-      }
-    });
+    // this.markerControls = new window.THREEx.ArMarkerControls(
+    //   this.arToolkitContext,
+    //   this.markerRoot,
+    //   {
+    //     type: "nft",
+    //     descriptorsUrl: "data/1/1",
+    //   }
+    // );
+    // this.markerControls1 = new window.THREEx.ArMarkerControls(
+    //   this.arToolkitContext,
+    //   this.markerRoot,
+    //   {
+    //     type: "nft",
+    //     descriptorsUrl: "data/2/2",
+    //   }
+    // );
+    // this.markerControls2 = new window.THREEx.ArMarkerControls(
+    //   this.arToolkitContext,
+    //   this.markerRoot,
+    //   {
+    //     type: "nft",
+    //     descriptorsUrl: "data/3/3",
+    //   }
+    // );
+    // this.markerControls3 = new window.THREEx.ArMarkerControls(
+    //   this.arToolkitContext,
+    //   this.markerRoot,
+    //   {
+    //     type: "nft",
+    //     descriptorsUrl: "data/1/1",
+    //   }
+    // );
+    // this.markerControls4 = new window.THREEx.ArMarkerControls(
+    //   this.arToolkitContext,
+    //   this.markerRoot,
+    //   {
+    //     type: "nft",
+    //     descriptorsUrl: "data/2/2",
+    //   }
+    // );
+    // this.markerControls.addEventListener("markerFound", (evt) => {
+    //   this.currentMarker = 0;
+    //   this.found = true;
+    // });
+    // this.markerControls1.addEventListener("markerFound", (evt) => {
+    //   this.currentMarker = 1;
+    //   this.found = true;
+    // });
+    // this.markerControls2.addEventListener("markerFound", (evt) => {
+    //   this.currentMarker = 2;
+    //   this.found = true;
+    // });
+    // this.markerControls3.addEventListener("markerFound", (evt) => {
+    //   this.currentMarker = 3;
+    //   this.found = true;
+    // });
+    // this.markerControls4.addEventListener("markerFound", (evt) => {
+    //   this.currentMarker = 4;
+    //   this.found = true;
+    // });
 
     // initialize it
     this.arToolkitContext.init(() => {
@@ -484,6 +692,10 @@ export default class AR extends Vue {
       }
     );
 
+    this.smoothedControls.addEventListener("markerLost", () => {
+      this.found = false;
+    });
+
     this.onRenderFcts.push(() => {
       this.smoothedControls.update(this.markerRoot);
     });
@@ -493,6 +705,12 @@ export default class AR extends Vue {
       const ratio = this.renderer.getPixelRatio();
       const left = (this.renderer.domElement.width / ratio - this.width) / 2;
       // const { width } = this;
+      //this.smoothedRoot.getWorldPosition();
+      if (this.smoothedRoot) {
+        this.clippingPlane
+          .copy(this.initPlane)
+          .applyMatrix4(this.smoothedRoot.matrixWorld);
+      }
       this.renderer.setScissorTest(true);
       this.renderer.setScissor(left, 0, this.width + 5, this.height);
       // this.threeCamera.position.x = 0;
@@ -607,5 +825,20 @@ export default class AR extends Vue {
   color: #fff;
   padding: 10px;
   z-index: 100;
+}
+.loader {
+  background: rgba(0, 0, 0, 0.4);
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 400;
 }
 </style>

@@ -16,7 +16,8 @@ position: fixed !important;
 }
 
 body, * {
-  font-family: 'Amplitude', 'Open Sans', sans-serif;
+  //font-family: 'Amplitude', 'Open Sans', sans-serif;
+  font-family:  sans-serif;
   color: #2B2B2B;
   line-height: 1.4;
   font-weight: 300;
@@ -49,6 +50,7 @@ h2 {
   letter-spacing: 1px;
   color: #2B2B2B;
   @include font($font-baskerville-regular);  
+  font-family:  sans-serif;
   @include desktop-up-layout {
     font-size: 40px;
     line-height: 1;
