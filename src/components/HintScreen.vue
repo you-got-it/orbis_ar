@@ -20,12 +20,23 @@
         >
       </h2> -->
 
-      <router-link
+      <!-- <router-link
         to="/ar"
         class="btn btn__primary content__button"
         :class="{ 'button--visible': buttonVisible, transparent: transparent }"
         >START THE STORY</router-link
+      > -->
+      <div
+        :class="[
+          'btn',
+          'btn__primary',
+          'content__button',
+          { 'button--visible': buttonVisible, transparent: transparent },
+        ]"
+        @click="$emit('buttonClick')"
       >
+        START THE STORY
+      </div>
     </div>
     <a href="www.orbis.org">www.orbis.org</a>
   </div>
@@ -38,9 +49,11 @@
 .content {
   height: 100%;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   flex-direction: column;
   align-items: center;
+  padding: 10vh 0;
+  box-sizing: border-box;
   &__break {
     @media (orientation: landscape) {
       display: none;
@@ -79,7 +92,7 @@
     color: #fff;
     border: none;
     background: #00a3e0;
-    padding: 10px;
+    padding: 0 6px;
     font-size: 18px;
     letter-spacing: inherit;
     line-height: 22px;
@@ -113,12 +126,12 @@ const images = {
 export default class HintScreen extends Vue {
   buttonVisible = false;
 
-  canvasVisible = false;
+  canvasVisible = true;
 
   transparent = false;
 
   mounted() {
-    gsap.delayedCall(2.0, () => {
+    gsap.delayedCall(0.3, () => {
       this.buttonVisible = true;
     });
     gsap.delayedCall(1.2, () => {

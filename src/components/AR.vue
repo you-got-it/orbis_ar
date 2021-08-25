@@ -329,6 +329,7 @@ export default class AR extends Vue {
   }
 
   setLayers(num) {
+    this.$emit("playSound", num);
     this.sceneGroup.children = [];
     switch (num) {
       case 0:
@@ -500,6 +501,9 @@ export default class AR extends Vue {
 
   initAR() {
     window.THREEx.ArToolkitContext.baseURL = "./";
+    //window.THREEx.ArToolkitContext.baseURL = window.location.href;
+    // window.THREEx.ArToolkitContext.baseURL =
+    //   "https://wg-ads.com/banners/book/ar/";
     //const config = { video: { width: 320 /* 320-640-1280 */ } };
     /* const v = document.createElement('video');
   const start = () => navigator.mediaDevices.getUserMedia(config)
@@ -513,12 +517,14 @@ export default class AR extends Vue {
       // to read from the webcam
       sourceType: "webcam",
 
-      sourceWidth: (window.innerWidth > window.innerHeight ? 640 : 480) * 1,
-      sourceHeight: (window.innerWidth > window.innerHeight ? 480 : 640) * 1,
-      // sourceWidth: 480 * 1.2,
-      // sourceHeight: 640 * 1.2,
-      displayWidth: (window.innerWidth > window.innerHeight ? 640 : 480) * 1,
-      displayHeight: (window.innerWidth > window.innerHeight ? 480 : 640) * 1,
+      // sourceWidth: (window.innerWidth > window.innerHeight ? 640 : 480) * 1,
+      // sourceHeight: (window.innerWidth > window.innerHeight ? 480 : 640) * 1,
+      sourceWidth: 480,
+      sourceHeight: 640,
+      displayWidth: (window.innerWidth > window.innerHeight ? 480 : 640) * 1,
+      displayHeight: (window.innerWidth > window.innerHeight ? 640 : 480) * 1,
+      // displayWidth: 640,
+      // displayHeight: 480,
     });
 
     this.arToolkitSource.init(() => {
@@ -560,11 +566,11 @@ export default class AR extends Vue {
       // update scene.visible if the marker is seen
     });
     const markerUrls = [
-      "data/0/0",
-      "data/1/1",
-      "data/2/2",
-      "data/3/3",
-      "data/4/4",
+      "https://wg-ads.com/banners/book/ar/data/0/0",
+      "https://wg-ads.com/banners/book/ar/data/1/1",
+      "https://wg-ads.com/banners/book/ar/data/2/2",
+      "https://wg-ads.com/banners/book/ar/data/3/3",
+      "https://wg-ads.com/banners/book/ar/data/4/4",
     ];
     this.markers = [];
     this.markers = markerUrls.map((url, index) => {
@@ -661,7 +667,7 @@ export default class AR extends Vue {
       // mat.elements[14] *= 200;
       // this.threeCamera.projectionMatrix.copy(mat);
       const canvas = this.arToolkitContext.arController.canvas;
-      this.$el.appendChild(canvas);
+      //this.$el.appendChild(canvas);
       canvas.style.position = "fixed";
       canvas.style.zIndex = 55;
       canvas.style.left = 0;
@@ -706,11 +712,7 @@ export default class AR extends Vue {
       const left = (this.renderer.domElement.width / ratio - this.width) / 2;
       // const { width } = this;
       //this.smoothedRoot.getWorldPosition();
-      if (this.smoothedRoot) {
-        this.clippingPlane
-          .copy(this.initPlane)
-          .applyMatrix4(this.smoothedRoot.matrixWorld);
-      }
+
       this.renderer.setScissorTest(true);
       this.renderer.setScissor(left, 0, this.width + 5, this.height);
       // this.threeCamera.position.x = 0;
@@ -724,6 +726,11 @@ export default class AR extends Vue {
       //this.smoothedRoot.position.y = -20;
       //this.markerRoot.visible = true;
       this.renderer.render(this.scene, this.threeCamera);
+      if (this.smoothedRoot) {
+        this.clippingPlane
+          .copy(this.initPlane)
+          .applyMatrix4(this.smoothedRoot.matrixWorld);
+      }
     });
 
     this.lastTimeMsec = null;

@@ -1,21 +1,55 @@
 <template>
   <div id="app">
-    <router-view />
+    <HintScreen v-if="page === 0" @buttonClick="buttonClick" />
+    <AR v-if="page === 1" @playSound="playSound" />
   </div>
 </template>
 
-<script lang="ts">
+<script>
 import { Component, Vue } from "vue-property-decorator";
-//import AR from "./components/AR.vue";
+import AR from "./components/AR.vue";
+import HintScreen from "./components/HintScreen.vue";
+import { useSound } from "@vueuse/sound";
 
 @Component({
   components: {
-    //  AR,
+    AR,
+    HintScreen,
+  },
+  setup() {
+    //const { play } = useSound("/audio/0.mp3");
+    // const play0 = useSound("/audio/0.mp3");
+    const audios = [
+      useSound("./audio/0.mp3"),
+      useSound("./audio/0.mp3"),
+      useSound("./audio/1.mp3"),
+      useSound("./audio/1.mp3"),
+      useSound("./audio/1.mp3"),
+    ];
+    const handlePlay = (num) => {
+      audios.forEach((a) => {
+        a.stop();
+      });
+      audios[num].play();
+    };
+    return {
+      handlePlay,
+    };
   },
 })
 export default class App extends Vue {
+  page = 0;
   mounted() {
     //console.log("mounted");
+    //this.setup();
+  }
+
+  buttonClick() {
+    this.page = 1;
+    //this.handlePlay(0);
+  }
+  playSound(num) {
+    this.handlePlay(num);
   }
 }
 </script>
