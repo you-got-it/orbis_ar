@@ -1,7 +1,7 @@
 <template>
   <div ref="container" id="ar" class="ar">
     <canvas class="ar__canvas" ref="3d" width="10px" height="10px"></canvas>
-    <div class="debug" v-html="getDebugString"></div>
+    <!-- <div class="debug" v-html="getDebugString"></div> -->
     <div class="loader" v-if="loading || markersLoading">Loading...</div>
   </div>
 </template>
@@ -337,13 +337,13 @@ export default class AR extends Vue {
         this.setupLayer(
           this.images.frame_0_1,
           0,
-          0.8,
+          0.8 * 1.3,
           this.images.frame_0_1_mask
         );
         this.setupLayer(
           this.images.frame_0_2,
           2,
-          1.6,
+          1.6 * 1.3,
           this.images.frame_0_2_mask
         );
         break;
@@ -353,19 +353,19 @@ export default class AR extends Vue {
         this.setupLayer(
           this.images.frame_1_1,
           -1,
-          0.8 * 0.8,
+          0.8 * 0.8 * 1.3,
           this.images.frame_1_1_mask
         );
         this.setupLayer(
           this.images.frame_1_2,
           1,
-          1.6 * 0.8,
+          1.6 * 0.8 * 1.3,
           this.images.frame_1_2_mask
         );
         this.setupLayer(
           this.images.frame_1_3,
           3,
-          2.4 * 0.8,
+          2.4 * 0.8 * 1.3,
           this.images.frame_1_3_mask
         );
         break;
@@ -375,13 +375,13 @@ export default class AR extends Vue {
         this.setupLayer(
           this.images.frame_2_1,
           0,
-          0.8,
+          0.8 * 1.3,
           this.images.frame_2_1_mask
         );
         this.setupLayer(
           this.images.frame_2_2,
           2,
-          1.6,
+          1.6 * 1.3,
           this.images.frame_2_2_mask
         );
         break;
@@ -391,19 +391,19 @@ export default class AR extends Vue {
         this.setupLayer(
           this.images.frame_3_1,
           -1,
-          0.8 * 0.8,
+          0.8 * 0.8 * 1.3,
           this.images.frame_3_1_mask
         );
         this.setupLayer(
           this.images.frame_3_2,
           1,
-          1.6 * 0.8,
+          1.6 * 0.8 * 1.3,
           this.images.frame_3_2_mask
         );
         this.setupLayer(
           this.images.frame_3_3,
           3,
-          2.4 * 0.8,
+          2.4 * 0.8 * 1.3,
           this.images.frame_3_3_mask
         );
         break;
@@ -413,13 +413,13 @@ export default class AR extends Vue {
         this.setupLayer(
           this.images.frame_4_1,
           0,
-          0.8,
+          0.8 * 1.3,
           this.images.frame_4_1_mask
         );
         this.setupLayer(
           this.images.frame_4_2,
           2,
-          1.6,
+          1.6 * 1.3,
           this.images.frame_4_2_mask
         );
         break;
@@ -454,7 +454,7 @@ export default class AR extends Vue {
       action.setLoop(LoopOnce);
       action.clampWhenFinished = true;
     });
-
+    mixer.timeScale = 0.7;
     this.mixers.push(mixer);
 
     // this.plane.rotation.x = -Math.PI / 2;
@@ -475,6 +475,7 @@ export default class AR extends Vue {
       duration: 0.6,
       delay: delay,
       y: 0,
+      rx: -0.43,
       ease: "power1.out",
       onUpdate: () => {
         plane.position.set(params.x, params.y, params.z);
@@ -499,9 +500,18 @@ export default class AR extends Vue {
     });*/
   }
 
+  getCorrectPath(url) {
+    let correctUrl = url;
+    correctUrl =
+      correctUrl.slice(-1) === "/" ? correctUrl.slice(0, -1) : correctUrl;
+    correctUrl = correctUrl.replace(/\/[^/]+?\.[^/]+?$/, "").slice(1);
+    return correctUrl;
+  }
+
   initAR() {
-    window.THREEx.ArToolkitContext.baseURL = "./";
-    //window.THREEx.ArToolkitContext.baseURL = window.location.href;
+    //window.THREEx.ArToolkitContext.baseURL = "./";
+    this.localUrl = this.getCorrectPath(window.location.pathname);
+    window.THREEx.ArToolkitContext.baseURL = this.localUrl + "/";
     // window.THREEx.ArToolkitContext.baseURL =
     //   "https://wg-ads.com/banners/book/ar/";
     //const config = { video: { width: 320 /* 320-640-1280 */ } };
@@ -535,7 +545,8 @@ export default class AR extends Vue {
     });
     this.arToolkitContext = new window.THREEx.ArToolkitContext(
       {
-        cameraParametersUrl: "./data/camera_para.dat",
+        //cameraParametersUrl: this.localUrl + "./data/camera_para.dat",
+        cameraParametersUrl: `data/camera_para.dat`,
         detectionMode: "mono",
         //patternRatio: 0.75,
         maxDetectionRate: 20,
@@ -566,11 +577,11 @@ export default class AR extends Vue {
       // update scene.visible if the marker is seen
     });
     const markerUrls = [
-      "https://wg-ads.com/banners/book/ar/data/0/0",
-      "https://wg-ads.com/banners/book/ar/data/1/1",
-      "https://wg-ads.com/banners/book/ar/data/2/2",
-      "https://wg-ads.com/banners/book/ar/data/3/3",
-      "https://wg-ads.com/banners/book/ar/data/4/4",
+      this.localUrl + "/data/0/0",
+      this.localUrl + "/data/1/1",
+      this.localUrl + "/data/2/2",
+      this.localUrl + "/data/3/3",
+      this.localUrl + "/data/4/4",
     ];
     this.markers = [];
     this.markers = markerUrls.map((url, index) => {

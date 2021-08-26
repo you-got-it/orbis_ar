@@ -622,8 +622,7 @@ ARjs.MarkerControls.prototype._initArtoolkit = function () {
 		workers.push(workerBlob);
         var workerBlobUrl = URL.createObjectURL(workerBlob);
         var worker = new Worker(workerBlobUrl);
-				window.nftWorker = worker;
-				console.log(parameters);
+				window.nftWorker = worker;				
         window.addEventListener('arjs-video-loaded', function (ev) {
 					var video = ev.detail.component;
 					var vw = video.clientWidth;
@@ -667,8 +666,8 @@ ARjs.MarkerControls.prototype._initArtoolkit = function () {
             arController.canvas.height = ph;
             // arController.canvas.width = arController.width;
             // arController.canvas.height = arController.height;
-						console.log(_this.context);	
-						console.log(video.videoWidth);	
+						// console.log(_this.context);	
+						// console.log(video.videoWidth);	
 					
 						
             var context_process = arController.canvas.getContext('2d');
@@ -679,12 +678,10 @@ ARjs.MarkerControls.prototype._initArtoolkit = function () {
 								// vh = video.videoHeight;
                 context_process.fillStyle = "black";
                 context_process.fillRect(0, 0, pw, ph);	
+							
 								// app.setDebugString(
-								// 	`width: ${video.videoWidth} </br>height: ${video.videoHeight}`						
-								// 	);
-								app.setDebugString(
-									`${vw}, ${vh}, ${ox}, ${oy},  ${w}, ${h},  ${pw}, ${ph},`						
-									);
+									// `${vw}, ${vh}, ${ox}, ${oy},  ${w}, ${h},  ${pw}, ${ph},`						
+									// );
 										
 							//	console.log(vw, vh, ox, oy, pw, ph);			
               context_process.drawImage(video, 0, 0, vw, vh, ox, oy, w, h);
@@ -694,15 +691,15 @@ ARjs.MarkerControls.prototype._initArtoolkit = function () {
 								
                 var imageData = context_process.getImageData(0, 0, pw, ph);
                 worker.postMessage({ type: "process", imagedata: imageData }, [imageData.data.buffer]);								
-            }
-
+            }		
+			
             // initialize the worker
             worker.postMessage({
                 type: 'init',
                 pw: pw,
                 ph: ph,
                 marker: descriptorsUrl,
-                param: arController.cameraParam.src,
+                param: THREEx.ArToolkitContext.baseURL+arController.cameraParam.src,
             });			
 
             worker.onmessage = function (ev) {
@@ -850,7 +847,7 @@ function load(msg) {
     var onError = function (error) {
         console.error(error);
     };
-    console.log(msg.param);
+    //console.log(msg.param);
     // we cannot pass the entire ARController, so we re-create one inside the Worker, starting from camera_param
     var param = new ARCameraParam(camUrl, onLoad, onError);
 }
@@ -1092,8 +1089,7 @@ ARjs.Context = THREEx.ArToolkitContext = function (parameters, sourceParameters)
         // the mode of detection - ['color', 'color_and_matrix', 'mono', 'mono_and_matrix']
         detectionMode: 'mono',
         // type of matrix code - valid iif detectionMode end with 'matrix' - [3x3, 3x3_HAMMING63, 3x3_PARITY65, 4x4, 4x4_BCH_13_9_3, 4x4_BCH_13_5_5]
-        matrixCodeType: '3x3',
-
+        matrixCodeType: '3x3',		
         // url of the camera parameters
         cameraParametersUrl: THREEx.ArToolkitContext.baseURL + '../data/data/camera_para.dat',
 
@@ -1707,7 +1703,7 @@ ARjs.Source.prototype._initSourceWebcam = function (onReady, onError) {
     domElement.setAttribute('playsinline', '');
     domElement.style.width = this.parameters.displayWidth + 'px'
     domElement.style.height = this.parameters.displayHeight + 'px'
-	console.log(domElement)
+	
 
     // check API is available
     if (navigator.mediaDevices === undefined

@@ -38,7 +38,7 @@
         START THE STORY
       </div>
     </div>
-    <a href="www.orbis.org">www.orbis.org</a>
+    <a href="https://www.orbis.org/" target="_blank">www.orbis.org</a>
   </div>
 </template>
 
@@ -79,7 +79,6 @@
     visibility: hidden;
     opacity: 0;
     transition: opacity 0.6s ease-in-out;
-    min-width: 207px;
     margin-bottom: 16px;
     @media (orientation: portrait) {
       margin-bottom: 20%;
@@ -87,12 +86,11 @@
     @media (max-aspect-ratio: 16/10) and (orientation: landscape) {
       margin-bottom: 16%;
     }
-    font-family: sans-serif;
-    font-weight: 800;
     color: #fff;
     border: none;
     background: #00a3e0;
-    padding: 0 6px;
+    padding: 10px;
+    padding-bottom: 7px;
     font-size: 18px;
     letter-spacing: inherit;
     line-height: 22px;
@@ -171,69 +169,6 @@ export default class HintScreen extends Vue {
   }
 
   setupObjects() {
-    const ctx = this.$refs.canvas.getContext("2d");
-    // ctx.fillRect(0, 0, 600, 600);
-    // this.card = new createjs.Container();
-    // this.card.initShapes = function initShapes() {
-    //   this.shape = new createjs.Shape();
-    //   this.shape.graphics
-    //     .f("#1E1E1E")
-    //     .s()
-    //     .p(
-    //       "Ah+CzICbAXIhUAygAAEgBICOgIIA0hmICKCLIjCBugAlPgbIBxhBQAvgRAhAPIgcgcIBug/QAvgRAfAQIgagbIBBgmICMCOIhAAlIAAAAIilBZIhChCQAPAggjAaIguAaIAjAmIhEAngAA2iMQAAAMgDAJIgGAKQgCABBTAhIhJhKQACAEgBAFgAhzBBIBXgxIBGBJg"
-    //     );
-    //   this.shape.setTransform(99.5, 78.8);
-
-    //   this.shape_1 = new createjs.Shape();
-    //   this.shape_1.graphics
-    //     .f("#FD595F")
-    //     .s()
-    //     .p(
-    //       "ABOAzIijgXQgSgCgMgOQgLgMACgQQACgRAOgKQAOgKASADICiAXQASACALAOQALALgBARQgCARgOAKQgLAIgMAAIgIgBg"
-    //     );
-    //   this.shape_1.setTransform(95, 92.3);
-
-    //   // Layer 1
-    //   this.shape_2 = new createjs.Shape();
-    //   this.shape_2.graphics
-    //     .f("#1E1E1E")
-    //     .s()
-    //     .p("ApvhLIK8mdIIjI1Iq7GdgAm6gzIGCGOIHzkoImCmNg");
-    //   this.shape_2.setTransform(99.3, 79.5);
-
-    //   this.shape_3 = new createjs.Shape();
-    //   this.shape_3.graphics
-    //     .f("rgba(0,0,0,0.298)")
-    //     .s()
-    //     .p("AxEpJIAVgNIRdSFIP9pXIAaAbIwSJkg");
-    //   this.shape_3.setTransform(109.9, 124);
-
-    //   this.shape_4 = new createjs.Shape();
-    //   this.shape_4.graphics
-    //     .f("#FEFAE5")
-    //     .s()
-    //     .p(
-    //       "AwqkBIgagcIQSplIR3SfIgVANIv9JZgArUi0IIkI1IK7mbIoho3gAoficIH1knIGAGQInyElg"
-    //     );
-    //   this.shape_4.setTransform(109.4, 90);
-    //   this.addChild(
-    //     this.shape_2,
-    //     this.shape_3,
-    //     this.shape_4,
-    //     this.shape,
-    //     this.shape_1
-    //   );
-    // };
-    // this.card.initShapes();
-    // this.card.cache(0, 0, 219.25, 183.9, 1);
-
-    // this.screenShape = new createjs.Shape();
-    // this.screenShape.graphics
-    //   .f("#098644")
-    //   .s()
-    //   .p(
-    //     "AESNfQg8gNgngpIydyyQgogoADgsQABgQAGgMQALgUAagNIB2g8IAfAfQAKAKAPADQAPAEALgGIFMinQAJgFACgIQADgEABgGQABgLgLgKIgbgcIBxg5QAsgXA7AOQA7ANAoAoISdSyQAoApgDAsQgBAPgGANQgLAUgaANIpvE6QgcANghAAQgUAAgWgEg"
-    //   );
     this.screenShape = {
       x: 0,
       y: 0,
@@ -243,56 +178,7 @@ export default class HintScreen extends Vue {
     this.screenShape.dx = 218.15 / 2 + 0.6;
     this.screenShape.dy = 187.75 / 2 - 3.6;
 
-    // this.phone = new createjs.Container();
-    // this.phone.initShapes = function initShapes(screenShape) {
-    //   this.shape = new createjs.Shape();
-    //   this.shape.graphics
-    //     .f("#DADADA")
-    //     .s()
-    //     .p(
-    //       "AEILOQhLgQgxgzIyeyyQgagbgMgeQgLgeAEgcIALg6QgBA0AvAwISeSyQAyAzBKARQBKAQA4gcIJvk6QAlgSAOgfQAGgLADgNIgQBUQgGATgOAQQgOAQgWALIpvE6QgiASgqAAQgaAAgcgHg"
-    //     );
-    //   this.shape.setTransform(-0.1, 21.4);
-
-    //   this.shape_1 = new createjs.Shape();
-    //   this.shape_1.graphics
-    //     .f("#FFFFFF")
-    //     .s()
-    //     .p(
-    //       "AENOAQhKgQgygzIyeyyQgvgwABg0IAAgHQACgWAJgSQAOgfAlgSIJvk6QA3gcBLAQQBKARAyAyISeSzQAyAzgEA3IgBALIgBAFQgDANgGALQgOAfglASIpvE7QgjARgrAAQgZAAgbgGgAvnoaQgaANgLAUQgGAMgBAQQgDAsAoAoISdSyQAnApA8ANQA7ANAsgWIJvk6QAagNALgUQAGgNABgPQADgsgogpIydyyQgogog7gNQg7gOgsAXIhxA5IAbAcQALAKgBALQgBAGgDAEQgCAIgJAFIlMCnQgLAGgPgEQgPgDgKgKIgfgfg"
-    //     );
-    //   this.shape_1.setTransform(0.6, -3.6);
-    //   this.addChild(this.shape, this.shape_1, screenShape);
-    // };
-    // this.phone.initShapes(this.screenShape);
-    // this.phone.cache(-218.15 / 2, -187.75 / 2, 218.15, 187.75, 1);
-    // this.screenShape.graphics._fill = null;
-    // this.screenShape.graphics._dirty = true;
     this.phone = {};
-    // this.petals = [];
-    // let frame = 0;
-    // for (let i = 0; i < 7; i += 1) {
-    //   const petal = {};
-    //   petal.fx = (frame % 2) * 64;
-    //   petal.fy = Math.trunc(frame / 2) * 64;
-    //   petal.x = 0;
-    //   petal.y = 0;
-    //   petal.sy = Math.random() * 140 - 70;
-    //   petal.sRadius = 20 + Math.random() * 10;
-    //   petal.radius = 20 + Math.random() * 10;
-    //   petal.sRadius *= 0.7;
-    //   petal.radius *= 0.6;
-    //   petal.scale = 1;
-    //   petal.sScale = 0.4 + Math.random() * 0.1;
-    //   petal.rotation = Math.random() * Math.PI * 2;
-    //   petal.dRotation = 0.01 + Math.random() * 0.02;
-    //   petal.dRotation *= randomSign();
-    //   petal.ang = Math.random() * Math.PI * 2;
-    //   petal.dAng = 0.032 + Math.random() * 0.01;
-    //   this.petals.push(petal);
-    //   frame += 1;
-    //   frame %= 4;
-    // }
     gsap.ticker.add(this.draw_event);
     this.startAnim();
   }
