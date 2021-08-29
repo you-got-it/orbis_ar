@@ -42,6 +42,7 @@ import {
   MeshBasicMaterial,
   ExtrudeGeometry as ExtrudeGeometryNew,
   PlaneGeometry,
+  PlaneBufferGeometry,
   LoopOnce,
   Plane,
 } from "three";
@@ -100,6 +101,7 @@ export default class AR extends Vue {
   markersLoading = true;
   loadedMarkers = 0;
   markers = [];
+  layers = [];
 
   get getDebugString() {
     return this.debugString;
@@ -181,6 +183,7 @@ export default class AR extends Vue {
 
   async loadResources() {
     const imagesToLoad = {
+      shadow: "images/shadow.jpg",
       frame_0_0: "images/0/0.jpg",
       frame_0_1: "images/0/1.jpg",
       frame_0_1_mask: "images/0/1_mask.jpg",
@@ -286,12 +289,12 @@ export default class AR extends Vue {
     this.renderer.autoClear = true;
     this.initPlane = new Plane(new Vector3(0, 1, 0), 0);
     this.clippingPlane = this.initPlane.clone();
-    this.renderer.clippingPlanes = [this.clippingPlane];
+    //this.renderer.clippingPlanes = [this.clippingPlane];
 
     if (this.isDesktop) {
       this.controls = new OrbitControls(this.threeCamera, this.$refs["3d"]);
       this.controls.target.set(0, -0.2, -0.2);
-      this.controls.maxPolarAngle = 1.45;
+      //this.controls.maxPolarAngle = 1.45;
       this.controls.update();
       this.sceneGroup = new Group();
       this.scene.add(this.sceneGroup);
@@ -310,6 +313,19 @@ export default class AR extends Vue {
     // this.scene.environment = this.hdrEnv;
     // this.models.model.scale.set(6, 6, 6);
     // this.sceneGroup.add(this.models.model);
+    const checkGroup = new Group();
+    this.models.model.add(checkGroup);
+    checkGroup.position.y = 7.24;
+    var geometry = new PlaneBufferGeometry(18, 13);
+    var material = new MeshBasicMaterial({
+      color: 0xffffff,
+      alphaMap: getTexture(this.images.shadow),
+      transparent: true,
+    });
+    this.bottomPlane = new Mesh(geometry, material);
+    this.bottomPlane.rotation.x = -Math.PI / 2;
+    this.bottomPlane.position.z = -0.6;
+    this.bottomPlane.position.y = 0.14;
     if (this.isDesktop) {
       this.currentScene = this.scene;
       this.sceneGroup.scale.set(2, 2, 2);
@@ -331,6 +347,8 @@ export default class AR extends Vue {
   setLayers(num) {
     this.$emit("playSound", num);
     this.sceneGroup.children = [];
+    this.layers = [];
+    this.sceneGroup.add(this.bottomPlane);
     switch (num) {
       case 0:
         this.setupLayer(this.images.frame_0_0, -2, 0);
@@ -437,6 +455,8 @@ export default class AR extends Vue {
       skinning: true,
       alphaMap: mask ? getTexture(mask) : null,
       depthWrite: false,
+      clippingPlanes: [this.clippingPlane],
+      //depthTest: false,
     });
     //this.plane = new Mesh(this.layerGeometry, material);
     //this.plane = this.models.model.clone();
@@ -447,6 +467,8 @@ export default class AR extends Vue {
     this.plane.position.z = zOffset;
     //this.plane.material = material;
     this.plane.children[0].children[1].material = material;
+    this.plane.renderOrder = 1;
+    this.plane.frustumCulled = false;
     // this.setClips(this.clips, this.plane);
     const mixer = new AnimationMixer(this.plane);
     gsap.delayedCall(delay, () => {
@@ -460,6 +482,7 @@ export default class AR extends Vue {
     // this.plane.rotation.x = -Math.PI / 2;
     this.sceneGroup.add(this.plane);
     this.startAnim(this.plane, zOffset, delay);
+    this.layers.push(this.plane);
   }
 
   startAnim(plane, zOffset, delay) {
@@ -736,12 +759,12 @@ export default class AR extends Vue {
       //console.log(this.markerRoot.scale.x);
       //this.smoothedRoot.position.y = -20;
       //this.markerRoot.visible = true;
-      this.renderer.render(this.scene, this.threeCamera);
       if (this.smoothedRoot) {
         this.clippingPlane
           .copy(this.initPlane)
           .applyMatrix4(this.smoothedRoot.matrixWorld);
       }
+      this.renderer.render(this.scene, this.threeCamera);
     });
 
     this.lastTimeMsec = null;
@@ -792,12 +815,10 @@ export default class AR extends Vue {
       this.mixer.uncacheRoot(this.mixer.getRoot());
       this.mixer = null;
     }
-    console.log("wtf2");
     this.clips = clips;
     if (!clips.length) return;
 
     this.mixer = new AnimationMixer(model);
-    console.log("asdasd");
   }
 
   animate(nowMsec) {
@@ -807,7 +828,15 @@ export default class AR extends Vue {
     this.mixers.forEach((mixer) => {
       mixer.update(deltaMsec / 1000);
     });
-
+    this.layers.forEach((l) => {
+      const wPos = new Vector3();
+      l.children[1].getWorldPosition(wPos);
+      l.cameraDist = this.threeCamera.position.clone().sub(wPos).length();
+    });
+    this.layers.sort(AR.sortLayers);
+    this.layers.forEach((l, i) => {
+      l.renderOrder = i + 1;
+    });
     //this.mixer && this.mixer.update(deltaMsec / 1000);
     if (this.isDesktop) {
       this.renderer.render(this.scene, this.threeCamera);
@@ -818,6 +847,16 @@ export default class AR extends Vue {
       //this.smoothedRoot.visible = this.markerRoot.visible;
     }
     this.raf = window.requestAnimationFrame(this.animate.bind(this));
+  }
+
+  static sortLayers(a, b) {
+    if (a.cameraDist < b.cameraDist) {
+      return 1;
+    }
+    if (a.cameraDist > b.cameraDist) {
+      return -1;
+    }
+    return 0;
   }
 }
 </script>
