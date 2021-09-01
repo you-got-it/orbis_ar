@@ -21,10 +21,10 @@ import { useSound } from "@vueuse/sound";
     // const play0 = useSound("/audio/0.mp3");
     const audios = [
       useSound("./audio/0.mp3"),
-      useSound("./audio/0.mp3"),
       useSound("./audio/1.mp3"),
-      useSound("./audio/1.mp3"),
-      useSound("./audio/1.mp3"),
+      useSound("./audio/2.mp3"),
+      useSound("./audio/3.mp3"),
+      useSound("./audio/4.mp3"),
     ];
     const handlePlay = (num) => {
       audios.forEach((a) => {

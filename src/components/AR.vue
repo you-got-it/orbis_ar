@@ -1,7 +1,16 @@
 <template>
   <div ref="container" id="ar" class="ar">
-    <canvas class="ar__canvas" ref="3d" width="10px" height="10px"></canvas>
+    <canvas
+      class="ar__canvas"
+      ref="3d"
+      width="10px"
+      height="10px"
+      :style="isDesktop ? { background: '#333' } : {}"
+    ></canvas>
     <!-- <div class="debug" v-html="getDebugString"></div> -->
+    <div class="subcont">
+      <div class="subtitles" v-html="currentSubtitle"></div>
+    </div>
     <div class="loader" v-if="loading || markersLoading">Loading...</div>
   </div>
 </template>
@@ -58,6 +67,7 @@ import {
   newCanvas,
   radialGradientTexture,
 } from "../assets/js/utils";
+import subtitlesData from "../assets/js/subtitles";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
@@ -75,9 +85,6 @@ import { SkeletonUtils } from "three/examples/jsm/utils/SkeletonUtils";
 
 //import gsap from "gsap";
 import { gsap } from "gsap";
-import { CustomEase } from "../assets/js/CustomEase";
-
-gsap.registerPlugin(CustomEase);
 
 import postscribe from "postscribe";
 window.THREE = require("three");
@@ -102,6 +109,7 @@ export default class AR extends Vue {
   loadedMarkers = 0;
   markers = [];
   layers = [];
+  currentSubtitle = "";
 
   get getDebugString() {
     return this.debugString;
@@ -287,6 +295,7 @@ export default class AR extends Vue {
     this.renderer.setClearColor(0xffeea0, 0);
     this.renderer.outputEncoding = sRGBEncoding;
     this.renderer.autoClear = true;
+    this.renderer.localClippingEnabled = true;
     this.initPlane = new Plane(new Vector3(0, 1, 0), 0);
     this.clippingPlane = this.initPlane.clone();
     //this.renderer.clippingPlanes = [this.clippingPlane];
@@ -343,9 +352,20 @@ export default class AR extends Vue {
       this.setLayers(4);
     }
   }
-
+  startSubtitles(num) {
+    const array = subtitlesData[num];
+    gsap.killTweensOf(this.nextTitle);
+    this.currentSubtitle = "";
+    array.forEach((s) => {
+      gsap.delayedCall(s.delay, this.nextTitle, [s.text]);
+    });
+  }
+  nextTitle(text) {
+    this.currentSubtitle = text;
+  }
   setLayers(num) {
     this.$emit("playSound", num);
+    this.startSubtitles(num);
     this.sceneGroup.children = [];
     this.layers = [];
     this.sceneGroup.add(this.bottomPlane);
@@ -355,13 +375,13 @@ export default class AR extends Vue {
         this.setupLayer(
           this.images.frame_0_1,
           0,
-          0.8 * 1.3,
+          0.64 * 1.3 * 1.3,
           this.images.frame_0_1_mask
         );
         this.setupLayer(
           this.images.frame_0_2,
           2,
-          1.6 * 1.3,
+          1.6 * 1.3 * 1.3,
           this.images.frame_0_2_mask
         );
         break;
@@ -371,19 +391,19 @@ export default class AR extends Vue {
         this.setupLayer(
           this.images.frame_1_1,
           -1,
-          0.8 * 0.8 * 1.3,
+          0.64 * 1.3 * 1.3,
           this.images.frame_1_1_mask
         );
         this.setupLayer(
           this.images.frame_1_2,
           1,
-          1.6 * 0.8 * 1.3,
+          1.28 * 1.3 * 1.3,
           this.images.frame_1_2_mask
         );
         this.setupLayer(
           this.images.frame_1_3,
           3,
-          2.4 * 0.8 * 1.3,
+          1.92 * 1.3 * 1.3,
           this.images.frame_1_3_mask
         );
         break;
@@ -393,13 +413,13 @@ export default class AR extends Vue {
         this.setupLayer(
           this.images.frame_2_1,
           0,
-          0.8 * 1.3,
+          0.8 * 1.3 * 1.3,
           this.images.frame_2_1_mask
         );
         this.setupLayer(
           this.images.frame_2_2,
           2,
-          1.6 * 1.3,
+          1.6 * 1.3 * 1.3,
           this.images.frame_2_2_mask
         );
         break;
@@ -409,19 +429,19 @@ export default class AR extends Vue {
         this.setupLayer(
           this.images.frame_3_1,
           -1,
-          0.8 * 0.8 * 1.3,
+          0.64 * 1.3 * 1.3,
           this.images.frame_3_1_mask
         );
         this.setupLayer(
           this.images.frame_3_2,
           1,
-          1.6 * 0.8 * 1.3,
+          1.28 * 1.3 * 1.3,
           this.images.frame_3_2_mask
         );
         this.setupLayer(
           this.images.frame_3_3,
           3,
-          2.4 * 0.8 * 1.3,
+          1.92 * 1.3 * 1.3,
           this.images.frame_3_3_mask
         );
         break;
@@ -431,17 +451,20 @@ export default class AR extends Vue {
         this.setupLayer(
           this.images.frame_4_1,
           0,
-          0.8 * 1.3,
+          0.8 * 1.3 * 1.3,
           this.images.frame_4_1_mask
         );
         this.setupLayer(
           this.images.frame_4_2,
           2,
-          1.6 * 1.3,
+          1.6 * 1.3 * 1.3,
           this.images.frame_4_2_mask
         );
         break;
     }
+    this.clippingPlane
+      .copy(this.initPlane)
+      .applyMatrix4(this.sceneGroup.matrixWorld);
   }
 
   setupLayer(image, zOffset, delay, mask) {
@@ -476,7 +499,7 @@ export default class AR extends Vue {
       action.setLoop(LoopOnce);
       action.clampWhenFinished = true;
     });
-    mixer.timeScale = 0.7;
+    mixer.timeScale = 0.49;
     this.mixers.push(mixer);
 
     // this.plane.rotation.x = -Math.PI / 2;
@@ -495,7 +518,7 @@ export default class AR extends Vue {
       rz: plane.rotation.z,
     };
     gsap.to(params, {
-      duration: 0.6,
+      duration: 0.8,
       delay: delay,
       y: 0,
       rx: -0.43,
@@ -505,22 +528,6 @@ export default class AR extends Vue {
         plane.rotation.set(params.rx, params.ry, params.rz);
       },
     });
-    /*
-    const ease = CustomEase.create(
-      "custom",
-      "M0,0 C0.366,0.138 0.257,1.016 0.512,1.09 0.672,1.136 0.838,1 1,1 "
-    );
-
-    gsap.to(params, {
-      delay: delay + 0.4,
-      duration: 1.0,
-      rx: 0,
-      ease: ease,
-      onUpdate: () => {
-        plane.position.set(params.x, params.y, params.z);
-        plane.rotation.set(params.rx, params.ry, params.rz);
-      },
-    });*/
   }
 
   getCorrectPath(url) {
@@ -552,10 +559,10 @@ export default class AR extends Vue {
 
       // sourceWidth: (window.innerWidth > window.innerHeight ? 640 : 480) * 1,
       // sourceHeight: (window.innerWidth > window.innerHeight ? 480 : 640) * 1,
-      sourceWidth: 480,
-      sourceHeight: 640,
-      displayWidth: (window.innerWidth > window.innerHeight ? 480 : 640) * 1,
-      displayHeight: (window.innerWidth > window.innerHeight ? 640 : 480) * 1,
+      sourceWidth: (window.innerWidth > window.innerHeight ? 640 : 480) * 1,
+      sourceHeight: (window.innerWidth > window.innerHeight ? 480 : 640) * 1,
+      displayWidth: 640,
+      displayHeight: 480,
       // displayWidth: 640,
       // displayHeight: 480,
     });
@@ -701,7 +708,7 @@ export default class AR extends Vue {
       // mat.elements[14] *= 200;
       // this.threeCamera.projectionMatrix.copy(mat);
       const canvas = this.arToolkitContext.arController.canvas;
-      //this.$el.appendChild(canvas);
+      // this.$el.appendChild(canvas);
       canvas.style.position = "fixed";
       canvas.style.zIndex = 55;
       canvas.style.left = 0;
@@ -863,6 +870,27 @@ export default class AR extends Vue {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
+@import "@/assets/scss/app.scss";
+.subcont {
+  font-size: 16px;
+  bottom: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 20px;
+  position: absolute;
+  z-index: 6;
+  line-height: 1.5em;
+  @include font($font-alright-normal);
+}
+.subtitles {
+  display: inline;
+  background: #253746;
+  color: white;
+  padding: 0.28em;
+  padding-left: 0;
+  padding-right: 0;
+  box-shadow: 8px 0 0 #253746, -8px 0 0 #253746;
+}
 .ar {
   overscroll-behavior: none;
   &__canvas {
