@@ -11,7 +11,9 @@
     <div class="subcont">
       <div class="subtitles" v-html="currentSubtitle"></div>
     </div>
-    <div class="loader" v-if="loading || markersLoading">Loading...</div>
+    <div class="loader" v-if="loading || markersLoading">
+      <img src="@/assets/images/loading.svg" />
+    </div>
   </div>
 </template>
 
