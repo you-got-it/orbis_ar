@@ -20,8 +20,8 @@ export default [
     {text: '', delay: 30},  
   ],
   [
-    {text: 'Tsehay is an eye care worker who has done more than 2,000 trachomatous', delay: 0},
-    {text: 'trichiasis surgeries in the seven years since her training.', delay: 5},
+    {text: 'Tsehay is an eye care worker who has done more than 2,000', delay: 0},
+    {text: 'trichiasis surgeries in the seven years since her training.', delay: 4.2},
     {text: '', delay: 8.4},
     {text: 'My patient said, “I can’t work and I’m isolated from my community.”', delay: 9.0},
     {text: 'We brought him here and did his trichiasis surgery successfully.', delay: 15},   

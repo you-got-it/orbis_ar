@@ -351,7 +351,7 @@ export default class AR extends Vue {
       this.smoothedRoot.add(this.sceneGroup);
     }
     if (this.isDesktop) {
-      this.setLayers(4);
+      this.setLayers(2);
     }
   }
   startSubtitles(num) {
