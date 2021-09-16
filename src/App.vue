@@ -1,6 +1,7 @@
 <template>
   <div id="app">
-    <HintScreen v-if="page === 0" @buttonClick="buttonClick" />
+    <Error v-if="!checkMedia" />
+    <HintScreen v-if="page === 0 && checkMedia" @buttonClick="buttonClick" />
     <AR v-if="page === 1" @playSound="playSound" />
   </div>
 </template>
@@ -9,12 +10,14 @@
 import { Component, Vue } from "vue-property-decorator";
 import AR from "./components/AR.vue";
 import HintScreen from "./components/HintScreen.vue";
+import Error from "./components/Error.vue";
 import { useSound } from "@vueuse/sound";
 
 @Component({
   components: {
     AR,
     HintScreen,
+    Error,
   },
   setup() {
     //const { play } = useSound("/audio/0.mp3");
@@ -40,8 +43,7 @@ import { useSound } from "@vueuse/sound";
 export default class App extends Vue {
   page = 0;
   mounted() {
-    //console.log("mounted");
-    //this.setup();
+    //
   }
 
   buttonClick() {
@@ -50,6 +52,25 @@ export default class App extends Vue {
   }
   playSound(num) {
     this.handlePlay(num);
+  }
+  get checkMedia() {
+    if (
+      navigator.mediaDevices === undefined ||
+      navigator.mediaDevices.enumerateDevices === undefined ||
+      navigator.mediaDevices.getUserMedia === undefined
+    ) {
+      let fctName;
+      if (navigator.mediaDevices === undefined) {
+        fctName = "navigator.mediaDevices";
+      } else if (navigator.mediaDevices.enumerateDevices === undefined) {
+        fctName = "navigator.mediaDevices.enumerateDevices";
+      } else if (navigator.mediaDevices.getUserMedia === undefined) {
+        fctName = "navigator.mediaDevices.getUserMedia";
+      } else {
+        return false;
+      }
+    }
+    return false;
   }
 }
 </script>
