@@ -70,7 +70,7 @@ export default class App extends Vue {
         return false;
       }
     }
-    return false;
+    return true;
   }
 }
 </script>

@@ -2,8 +2,15 @@
   <div class="content">
     <img class="logo" src="@/assets/images/logo.svg" />
     <div class="text-center">
-      Your current browser is not supported. To get the most out of this
-      experience please change your browser
+      <div class="text-title">
+        Unfortunately, the AR experience is not working properly on this device,
+        please try:
+      </div>
+      <ul>
+        <li>- Switching to another browser</li>
+        <li>- Clearing the cache</li>
+        <li>- Closing any apps that are currently running</li>
+      </ul>
     </div>
     <a href="https://www.orbis.org/" target="_blank">www.orbis.org</a>
   </div>
@@ -15,6 +22,15 @@
 }
 .text-center {
   padding: 20px;
+  text-align: center;
+  ul {
+    text-align: left;
+    padding-left: 15px;
+  }
+}
+.text-title {
+  margin-bottom: 20px;
+  font-weight: bold;
 }
 .content {
   height: 100%;
